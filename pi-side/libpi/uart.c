@@ -23,12 +23,6 @@ const unsigned int AUX_MU_CNTL = AUX_BASE + 0x60;
 const unsigned int AUX_MU_STAT = AUX_BASE + 0x64;
 const unsigned int AUX_MU_BAUD = AUX_BASE + 0x68;
 
-// use this if you need memory barriers.
-void dev_barrier(void) {
-	dmb();
-	dsb();
-}
-
 void uart_init(void) {
     // Memory barrier before GPIO operations.
     dev_barrier();

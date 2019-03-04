@@ -21,5 +21,6 @@ set(CMAKE_ASM_FLAGS
         -march=armv6zk")
 
 add_subdirectory(bootloader)
+add_subdirectory(kernel)
 add_subdirectory(libpi)
 add_subdirectory(usr)
