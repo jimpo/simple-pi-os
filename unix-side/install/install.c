@@ -23,10 +23,10 @@
 #include <unistd.h>
 #include <termios.h>
 
-#include "demand.h"
-#include "simple-boot.h"
-#include "support.h"
-#include "trace.h"
+#include "support/demand.h"
+#include "support/simple-boot.h"
+#include "support/support.h"
+#include "support/trace.h"
 #include "tty.h"
 
 // synchronously wait for <pid> to exit.  Return its exit code.
@@ -57,7 +57,7 @@ void handoff_to(int fd, char *argv[]) {
 
         ret = execvp(argv[0], argv);
         if (ret < 0) {
-            sys_die(execvp, failed to exec my-install);
+            sys_die(execvp, failed to exec handoff);
         }
     }
 

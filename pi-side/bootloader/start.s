@@ -1,4 +1,4 @@
-@ based on dwelch's start for bootloader.
+.section ".text.boot"
 
 .globl _start
 _start:
@@ -8,7 +8,3 @@ skip:
     mov sp,#0x08000000
     bl notmain
 hang: b rpi_reboot
-
-.globl BRANCHTO
-BRANCHTO:
-    bx r0

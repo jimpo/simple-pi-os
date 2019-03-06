@@ -6,6 +6,8 @@ set(CMAKE_C_STANDARD 11)
 add_subdirectory(pi-side)
 add_subdirectory(unix-side)
 
+set(CMAKE_VERBOSE_MAKEFILE on)
+
 add_custom_target(run
-        COMMAND $<TARGET_FILE_NAME:simple-pi-install> pi-side/kernel/kernel.bin
-        DEPENDS simple-pi-install kernel.bin)
+        COMMAND $<TARGET_FILE:simple-pi-install> -exec $<TARGET_FILE:simple-pi-shell> pi-side/kernel/kernel.bin
+        DEPENDS simple-pi-install simple-pi-shell kernel.bin)

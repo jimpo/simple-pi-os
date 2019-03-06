@@ -3,8 +3,7 @@ cmake_minimum_required(VERSION 3.13)
 set(LINKER_SCRIPT memmap)
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -T ${CMAKE_CURRENT_SOURCE_DIR}/${LINKER_SCRIPT}")
 
-set(SRC bootloader.c
-        start.s)
+set(SRC start.s bootloader.c)
 
 add_executable(bootloader.elf ${SRC})
 target_link_libraries(bootloader.elf pi)
