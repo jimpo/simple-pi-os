@@ -1,5 +1,6 @@
-#include "libpi/rpi.h"
-#include "sd-card.h"
+#include <libpi/rpi.h>
+
+#include "disk/sd.h"
 #include "shell.h"
 
 // have pi send this back when it reboots (otherwise my-install exits).
@@ -26,10 +27,9 @@ void notmain() {
 	int n;
 	char buf[1024];
 
-    SDRESULT init_result = sdInitCard(printk, printk, 1);
-    printk("init_result = %d\n", init_result);
-    printk("%s\n", ready);
+	demand(sd_init() == SD_OK, failed to initialize SD card);
 
+    printk("%s\n", ready);
 
     while((n = readline(buf, sizeof buf))) {
         if (strncmp(buf, "echo ", 5) == 0) {
@@ -42,12 +42,6 @@ void notmain() {
             rpi_reboot();
 		}
         if (strncmp(buf, "ls", 3) == 0) {
-            FIND_DATA file_data;
-            for (HANDLE file_handle = sdFindFirstFile("*", &file_data);
-                 file_handle;
-                 file_handle = sdFindNextFile(file_handle, &file_data)) {
-                printk("%s\n", file_data.cFileName);
-            }
             printk("%s\n", cmd_done);
             continue;
         }

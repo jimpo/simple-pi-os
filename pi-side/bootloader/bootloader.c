@@ -70,7 +70,7 @@ u8 receive_image(void) {
 void notmain(void) {
     uart_init();
 
-    // XXX: cs107e has this delay; doesn't seem to be required if
+    // XXX: cs107e has this delay_cycles; doesn't seem to be required if
     // you drain the uart.
     delay_ms(500);
 

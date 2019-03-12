@@ -1,9 +1,10 @@
 /* simplified bootloader.  */
-#include "libpi/rpi.h"
+#include <libpi/rpi.h>
+
 #include "shell.h"
 
 #define __SIMPLE_IMPL__
-#include "bootloader/simple-boot.h"
+#include <bootloader/simple-boot.h>
 
 static void send_byte(unsigned char uc) {
     uart_putc(uc);

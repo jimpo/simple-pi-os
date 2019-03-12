@@ -117,7 +117,7 @@ int gpio_set_pud(unsigned pin, unsigned pud) {
     PUT32(gpio_pud, pud);
 
     // 2. Wait 150 cycles -- this provides the required set-up time for the control signal
-    delay(150);
+    delay_cycles(150);
 
     // 3. Write to GPPUDCLK0/1 to clock the control signal into the GPIO pads you wish to
     // modify -- NOTE only the pads which receive a clock will be modified, all others will
@@ -125,7 +125,7 @@ int gpio_set_pud(unsigned pin, unsigned pud) {
     PUT32(gpio_pudclk[pin / 32], 1 << (pin % 32));
 
     // 4. Wait 150 cycles -- this provides the required hold time for the control signal
-    delay(150);
+    delay_cycles(150);
 
     // 5. Write to GPPUD to remove the control signal
     PUT32(gpio_pud, GPIO_PUD_DISABLE);

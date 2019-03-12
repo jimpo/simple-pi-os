@@ -1,4 +1,5 @@
-#include "libpi/rpi.h"
+#include <libpi/rpi.h>
+
 #include "rpi-thread.h"
 
 // typedef rpi_thread_t E;
@@ -6,7 +7,6 @@
 #include "Q.h"
 
 #define WORD_SIZE 4
-#define NULL 0
 
 static struct Q runq, freeq;
 static unsigned nthreads = 0;

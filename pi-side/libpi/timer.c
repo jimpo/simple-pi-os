@@ -1,6 +1,6 @@
 #include "rpi.h"
 
-void delay(unsigned ticks) {
+void delay_cycles(unsigned ticks) {
     while(ticks-- > 0)
             asm("add r1, r1, #0");
 }
