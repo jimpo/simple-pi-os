@@ -22,6 +22,7 @@ set(SRC asm.s
         cstart.c
         gpio.c
         kmalloc.c
+        math.c
         mem-barrier.s
         printf.c
         put-get.s

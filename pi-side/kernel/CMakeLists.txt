@@ -3,9 +3,10 @@ cmake_minimum_required(VERSION 3.13)
 set(LINKER_SCRIPT memmap)
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -T ${CMAKE_CURRENT_SOURCE_DIR}/${LINKER_SCRIPT}")
 
-set(SRC loader.c rpi-thread.c shell.c start.s thread-asm.s)
+set(SRC sd-card.c loader.c rpi-thread.c shell.c start.s thread-asm.s)
 
 add_executable(kernel.elf ${SRC})
+target_link_libraries(kernel.elf gcc)
 target_link_libraries(kernel.elf pi)
 target_include_directories(kernel.elf PUBLIC ..)
 

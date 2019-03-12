@@ -1,5 +1,5 @@
-#ifndef __PI_SHELL_H__
-#define __PI_SHELL_H__
+#ifndef __SHELL_H__
+#define __SHELL_H__
 
 /*
  * long term: we need to allocate space to run processes.  in this lab

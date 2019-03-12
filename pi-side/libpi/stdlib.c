@@ -59,6 +59,23 @@ int strncmp(const char* _s1, const char* _s2, size_t n) {
     	return 0;
 }
 
+char* strchr(const char* s, int c) {
+	for (char* p = s; *p; p++) {
+		if (*p == c) {
+			return p;
+		}
+	}
+	return 0;
+}
+
+int toupper(int c) {
+	if (c >= 'a' && c <= 'z') {
+		c += 'A' - 'a';
+	}
+	return c;
+}
+
+
 // use this if you need memory barriers.
 void dev_barrier(void) {
         dmb();

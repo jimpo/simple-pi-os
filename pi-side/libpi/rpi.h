@@ -7,11 +7,22 @@
 #define __RPI_H__
 
 /*****************************************************************************
+ * math
+ */
+
+#define MAX(x, y) (((x) > (y)) ? (x) : (y))
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+
+// Determine base 2 log of an integer greater than 0 rounded down to the nearest integer.
+unsigned int_log2(unsigned v);
+
+/*****************************************************************************
  * pi types
  */
 
 #ifndef FAKE_PI
 // if we are compiling fake, then I think we want to override this.
+typedef unsigned long long uint64_t;
 typedef unsigned uint32_t;
 typedef unsigned short uint16_t;
 typedef unsigned char uint8_t;
@@ -27,6 +38,8 @@ void *memset(void *_p, int c, size_t n) ;
 int memcmp(const void *_s1, const void *_s2, size_t nbytes);
 void *memcpy(void *dst, const void *src, size_t nbytes);
 int strncmp(const char* _s1, const char* _s2, size_t n);
+char* strchr(const char* s, int c);
+int toupper(int c);
 #else
 #	include <stddef.h>
 #endif

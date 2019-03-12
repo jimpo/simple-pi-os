@@ -186,6 +186,7 @@ static int va_printk(char *buf, int n, const char *fmt, va_list args) {
 #endif
 			}
 			case 'd':
+			case 'i':
 				s = emit(10, num, 128, va_arg(args, int), width, 1);
 				break;
 			case 'u':

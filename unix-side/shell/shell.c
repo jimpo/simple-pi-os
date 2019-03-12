@@ -22,6 +22,8 @@
 static const char pi_done[] = "PI REBOOT!!!";
 // pi sends this after a program executes to indicate it finished.
 static const char cmd_done[] = "CMD-DONE\n";
+// pi sends this before shell loops begins.
+static const char ready[] = "READY\n";
 
 unsigned get_uint(int fd);
 void put_uint(int fd, unsigned u);
@@ -217,6 +219,12 @@ static int do_builtin_cmd(int pi_fd, char *argv[], int nargs) {
         return 1;
     }
 
+    if (strncmp("ls", argv[0], 3) == 0) {
+        pi_put(pi_fd, "ls\n");
+        echo_until(pi_fd, cmd_done);
+        return 1;
+    }
+
     if (strncmp("reboot", argv[0], 7) == 0) {
         send_reboot(pi_fd);
         exit(0);
@@ -242,7 +250,9 @@ static int shell(int pi_fd, int unix_fd) {
 
 	catch_control_c();
 
-	// wait for the welcome message from the pi?  note: we 
+    echo_until(pi_fd, ready);
+
+	// wait for the welcome message from the pi?  note: we
 	// will hang if the pi does not send an entire line.  not 
 	// sure about this: should we keep reading til newline?
 	note("> ");
