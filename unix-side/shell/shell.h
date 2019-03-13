@@ -4,7 +4,7 @@
 // bad form, but I don't want to have the include.
 enum { TRACE_FD_REPLAY = 11, TRACE_FD_HANDOFF };
 
-#define note(msg...) do {               \
+#define log(msg...) do {               \
         fprintf(stderr, "PIX:");        \
         fprintf(stderr, ##msg);         \
 } while(0)

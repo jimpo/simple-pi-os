@@ -7,7 +7,7 @@
 static const char pi_done[] = "PI REBOOT!!!";
 // pi sends this after a program executes to indicate it finished.
 static const char cmd_done[] = "CMD-DONE";
-// pi sends this before shell loops begins.
+// pi sends this when it's ready for another command.
 static const char ready[] = "READY";
 
 // read characters until we hit a newline.

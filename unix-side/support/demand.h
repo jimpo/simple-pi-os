@@ -41,6 +41,11 @@
         fprintf(stderr, ##msg);						\
 } while(0)
 
+#define note(msg...) do {                                              \
+        fprintf(stderr, "%s:%s:%d:", __FILE__, __FUNCTION__, __LINE__); \
+        fprintf(stderr, ##msg);                                                             \
+} while(0)
+
 /* Compile-time assertion used in function. */
 #define AssertNow(x) switch(1) { case (x): case 0: ; }
 

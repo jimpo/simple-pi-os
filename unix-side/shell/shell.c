@@ -52,8 +52,8 @@ int pi_readline(int fd, char *buf, unsigned sz) {
 	for(int i = 0; i < sz; i++) {
 		int n;
                 if((n = read(fd, &buf[i], 1)) != 1) {
-                	note("got %s res=%d, expected 1 byte\n", strerror(n),n);
-                	note("assuming: pi connection closed.  cleaning up\n");
+                	log("got %s res=%d, expected 1 byte\n", strerror(n),n);
+                	log("assuming: pi connection closed.  cleaning up\n");
                         exit(0);
                 }
 		if(buf[i] == '\n') {
@@ -75,7 +75,7 @@ static void (expect_val)(int fd, unsigned v, const char *s) {
 // print out argv contents.
 /*
 static void print_args(const char *msg, char *argv[], int nargs) {
-	note("%s: prog=<%s> ", msg, argv[0]);
+	log("%s: prog=<%s> ", msg, argv[0]);
 	for(int i = 1; i < nargs; i++)
 		printf("<%s> ", argv[i]);
 	printf("\n");
@@ -122,7 +122,7 @@ static int do_unix_cmd(char *argv[], int nargs) {
     if (pid == 0) {
         // Child process;
         execvp(argv[0], argv);
-        note("command not found: %s\n", strerror(errno));
+        log("command not found: %s\n", strerror(errno));
         exit(1);
     }
 
@@ -187,7 +187,7 @@ static void send_reboot(int pi_fd) {
     pi_readline(pi_fd, buf, 256);
     demand(strcmp(buf, pi_done) == 0, unexpected reboot response);
 
-    note("Exiting, pi has rebooted\n");
+    log("Exiting, pi has rebooted\n");
 }
 
 // run a builtin: reboot, echo, cd
@@ -252,10 +252,10 @@ static int shell(int pi_fd, int unix_fd) {
 
     echo_until(pi_fd, ready);
 
-	// wait for the welcome message from the pi?  note: we
+	// wait for the welcome message from the pi?  log: we
 	// will hang if the pi does not send an entire line.  not 
 	// sure about this: should we keep reading til newline?
-	note("> ");
+	log("> ");
 	while(!done && fgets(buf, sizeof buf, stdin)) {
 		int n = strlen(buf)-1;
 		buf[n] = 0;
@@ -270,7 +270,7 @@ static int shell(int pi_fd, int unix_fd) {
 		// if not a pi program (end in .bin) fork-exec
 		else if(!run_pi_prog(pi_fd, argv, nargs))
 			do_unix_cmd(argv, nargs);
-		note("> ");
+		log("> ");
 	}
 
 	if(done) {
