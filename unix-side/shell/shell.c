@@ -173,7 +173,7 @@ static int run_pi_prog(int pi_fd, char *argv[], int nargs) {
         return 0;
     }
 
-    pi_put(pi_fd, "run\n");
+    pi_put(pi_fd, "load\n");
     send_prog(pi_fd, argv[0]);
     echo_until(pi_fd, cmd_done);
 
@@ -220,7 +220,37 @@ static int do_builtin_cmd(int pi_fd, char *argv[], int nargs) {
     }
 
     if (strncmp("ls", argv[0], 3) == 0) {
-        pi_put(pi_fd, "ls\n");
+        if (nargs != 2) {
+            fprintf(stderr, "ls expects 1 argument, got %d\n", nargs - 1);
+            return 1;
+        }
+        pi_put(pi_fd, "ls ");
+        pi_put(pi_fd, argv[1]);
+        pi_put(pi_fd, "\n");
+        echo_until(pi_fd, cmd_done);
+        return 1;
+    }
+
+    if (strncmp("cat", argv[0], 4) == 0) {
+        if (nargs != 2) {
+            fprintf(stderr, "cat expects 1 argument, got %d\n", nargs - 1);
+            return 1;
+        }
+        pi_put(pi_fd, "cat ");
+        pi_put(pi_fd, argv[1]);
+        pi_put(pi_fd, "\n");
+        echo_until(pi_fd, cmd_done);
+        return 1;
+    }
+
+    if (strncmp("run", argv[0], 4) == 0) {
+        if (nargs != 2) {
+            fprintf(stderr, "run expects 1 argument, got %d\n", nargs - 1);
+            return 1;
+        }
+        pi_put(pi_fd, "run ");
+        pi_put(pi_fd, argv[1]);
+        pi_put(pi_fd, "\n");
         echo_until(pi_fd, cmd_done);
         return 1;
     }

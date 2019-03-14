@@ -16,18 +16,6 @@ void *sec_read(uint32_t lba, uint32_t nsec) {
     return data;
 }
 
-// there are other tags right?
-static int is_fat32(int t) { return t == 0xb || t == 0xc; }
-
-typedef struct fat32 {
-    uint32_t fat_begin_lba,
-            cluster_begin_lba,
-            sectors_per_cluster,
-            root_dir_first_cluster;
-    uint32_t *fat;
-    uint32_t n_fat;
-} fat32_fs_t;
-
 /*
     Field                       Microsoft's Name    Offset   Size        Value
     Bytes Per Sector            BPB_BytsPerSec      0x0B(11) 16 Bits     Always 512 Bytes
@@ -98,6 +86,32 @@ pi_dir_t fat32_to_dirent(fat32_fs_t *fs, fat32_dir_t *d, uint32_t n) {
     return p;
 }
 
+static uint32_t count_clusters(fat32_fs_t* fs, uint32_t start_id) {
+    uint32_t n_clusters = 0;
+    for (uint32_t id = start_id;
+         fat32_fat_entry_type(id) != LAST_CLUSTER;
+         id = fs->fat[id]) {
+        n_clusters++;
+    }
+    return n_clusters;
+}
+
+pi_dir_t fat32_read_dir(fat32_fs_t *fs, dirent_t *d) {
+    uint32_t cluster_id = d ? d->cluster_id : fs->root_dir_first_cluster;
+    uint32_t n_clusters = count_clusters(fs, cluster_id);
+    uint32_t n_sectors = n_clusters * fs->sectors_per_cluster;
+
+    unsigned dir_lba = cluster_to_lba(fs, cluster_id);
+
+    // calculate the number of directory entries.
+    uint32_t dir_n = n_sectors * SECTOR_SIZE / sizeof(fat32_dir_t);
+
+    // read in the directories.
+    fat32_dir_t *dirs = (fat32_dir_t*)sec_read(dir_lba, n_sectors);
+
+    return fat32_to_dirent(fs, dirs, dir_n);
+}
+
 // read in an entire file.  note: make sure you test both on short files (one cluster)
 // and larger ones (more than one cluster).
 pi_file_t fat32_read_file(fat32_fs_t *fs, dirent_t *d) {
@@ -111,13 +125,7 @@ pi_file_t fat32_read_file(fat32_fs_t *fs, dirent_t *d) {
     // compute how many sectors in cluster.
     // allocate this many bytes.
 
-    uint32_t n_clusters = 0;
-    for (uint32_t id = start_id;
-         fat32_fat_entry_type(id) != LAST_CLUSTER;
-         id = fs->fat[id]) {
-        n_clusters++;
-    }
-
+    uint32_t n_clusters = count_clusters(fs, start_id);
     uint32_t n_sectors = n_clusters * fs->sectors_per_cluster;
 
     f.n_data = d->nbytes;
@@ -136,7 +144,7 @@ pi_file_t fat32_read_file(fat32_fs_t *fs, dirent_t *d) {
     return f;
 }
 
-dirent_t *dir_lookup(pi_dir_t *d, char *name) {
+dirent_t *dir_lookup(pi_dir_t *d, const char *name) {
     for(int i = 0; i < d->n; i++) {
         dirent_t *e = &d->dirs[i];
         if(strcmp(name, e->name) == 0)
@@ -145,3 +153,67 @@ dirent_t *dir_lookup(pi_dir_t *d, char *name) {
     return 0;
 }
 
+dirent_t *path_lookup(fat32_fs_t* fs, dirent_t *search_dir, const char *path, pi_dir_t* last_dir) {
+    *last_dir = fat32_read_dir(fs, search_dir);
+
+    const char* sep;
+    while ((sep = strchr(path, '/'))) {
+        char name[256];
+        demand(sep - path < 256, filename is too long);
+
+        int i;
+        for (i = 0; path < sep; path++, i++) {
+            name[i] = *path;
+        }
+        name[i] = '\0';
+
+        search_dir = dir_lookup(last_dir, name);
+        if (!search_dir) {
+            printk("%s does not exist\n", name);
+            goto clean_exit;
+        } else if (!search_dir->is_dir_p) {
+            search_dir = NULL;
+            printk("%s is not a directory\n", name);
+            goto clean_exit;
+        }
+
+        pi_dir_t next_dir = fat32_read_dir(fs, search_dir);
+        kfree(last_dir->dirs);
+        *last_dir = next_dir;
+        path = sep + 1;
+    }
+
+    search_dir = dir_lookup(last_dir, path);
+    if (!search_dir) {
+        printk("%s does not exist\n", path);
+    }
+
+    clean_exit:
+    kfree(last_dir->dirs);
+    return search_dir;
+}
+
+fat32_fs_t init_fs() {
+    demand(sd_init() == SD_OK, failed to initialize SD card);
+
+    struct mbr *mbr = sec_read(0, 1);
+    fat32_mbr_check(mbr);
+
+    assert(!fat32_partition_empty((uint8_t*)&mbr->part_tab[0]));
+    assert(fat32_partition_empty((uint8_t*)&mbr->part_tab[1]));
+    assert(fat32_partition_empty((uint8_t*)&mbr->part_tab[2]));
+    assert(fat32_partition_empty((uint8_t*)&mbr->part_tab[3]));
+
+    struct partition_entry* p = &mbr->part_tab[0];
+    assert(is_fat32(p->part_type));
+
+    fat32_boot_sec_t *b = sec_read(p->lba_start, 1);
+    fat32_volume_id_check(b);
+    fat32_volume_id_print("boot sector", b);
+
+    struct fat32 fs = fat32_mk(p->lba_start, b);
+
+    kfree(b);
+    kfree(mbr);
+    return fs;
+}

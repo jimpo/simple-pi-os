@@ -236,6 +236,8 @@ void fat32_fsinfo_check(struct fsinfo *f);
 // MBR type to string.
 const char *fat32_part_str(int x);
 
+int is_fat32(int t);
+
 // general purpose utility code.
 void print_bytes(const char *msg, uint8_t *p, int n);
 void print_words(const char *msg, uint32_t *p, int n);

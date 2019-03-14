@@ -97,10 +97,16 @@ void dummy(unsigned);
 
 void *kmalloc_heap_end(void);
 void *kmalloc_heap_start(void);
-void *kmalloc(unsigned sz) ;
+
 void kfree(void *p);
 void kfree_all(void);
+// returns 0-filled memory aligned to <nbits_alignment>
+void *kmalloc_aligned(unsigned nbytes, unsigned nbits_alignment);
+// returns 0-filled memory.
+void *kmalloc(unsigned nbytes) ;
 
+// set where the heap starts.
+void kmalloc_set_start(unsigned _addr);
 
 /*****************************************************************************
  * memory barriers

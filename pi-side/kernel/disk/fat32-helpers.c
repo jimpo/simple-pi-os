@@ -84,7 +84,8 @@ int fat32_partition_empty(uint8_t *part) {
  */
 #define is_pow2(x) (((x) & -(x)) == (x))
 
-static int is_fat32(int t) { return t == 0xb; }
+// there are other tags right?
+int is_fat32(int t) { return t == 0xb || t == 0xc; }
 
 void fat32_volume_id_check(fat32_boot_sec_t *b) {
     // has to be a multiple of 512 or the sd.c driver won't really work.
