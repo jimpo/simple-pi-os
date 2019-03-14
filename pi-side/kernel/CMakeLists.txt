@@ -13,7 +13,9 @@ set(SRC shell.c
         loader.c
         rpi-thread.c
         start.s
-        thread-asm.s)
+        thread-asm.s
+        vm.c
+        vm-asm.S)
 
 add_executable(kernel.elf ${SRC})
 target_link_libraries(kernel.elf pi)

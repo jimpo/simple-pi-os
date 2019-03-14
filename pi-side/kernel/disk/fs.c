@@ -193,9 +193,7 @@ dirent_t *path_lookup(fat32_fs_t* fs, dirent_t *search_dir, const char *path, pi
     return search_dir;
 }
 
-fat32_fs_t init_fs() {
-    demand(sd_init() == SD_OK, failed to initialize SD card);
-
+fat32_fs_t fat32_init() {
     struct mbr *mbr = sec_read(0, 1);
     fat32_mbr_check(mbr);
 

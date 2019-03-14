@@ -20,10 +20,10 @@ static int readline(char *buf, int sz) {
 
 void notmain() {
 	uart_init();
+    demand(sd_init() == SD_OK, failed to initialize SD card);
+
 	int n;
 	char buf[1024];
-
-	demand(sd_init() == SD_OK, failed to initialize SD card);
 
     printk("%s\n", ready);
 

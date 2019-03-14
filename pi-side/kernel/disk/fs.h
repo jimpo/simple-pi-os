@@ -41,7 +41,7 @@ typedef struct fat32 {
     uint32_t n_fat;
 } fat32_fs_t;
 
-fat32_fs_t init_fs();
+fat32_fs_t fat32_init();
 pi_dir_t fat32_read_dir(fat32_fs_t *fs, dirent_t *d);
 pi_file_t fat32_read_file(fat32_fs_t *fs, dirent_t *d);
 

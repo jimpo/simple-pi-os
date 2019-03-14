@@ -5,6 +5,7 @@
 #include "disk/sd.h"
 #include "elf.h"
 #include "shell.h"
+#include "vm.h"
 
 // have pi send this back when it reboots (otherwise my-install exits).
 static const char pi_done[] = "PI REBOOT!!!";
@@ -116,10 +117,13 @@ void do_run(fat32_fs_t* fs, const char* path) {
 
 void notmain() {
 	uart_init();
+    demand(sd_init() == SD_OK, failed to initialize SD card);
+    vm_enable();
+
+    fat32_fs_t fs = fat32_init();
+
 	int n;
 	char buf[1024];
-
-    fat32_fs_t fs = init_fs();
 
     printk("%s\n", ready);
 

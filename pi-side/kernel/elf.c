@@ -19,6 +19,23 @@ static size_t locate_symbol_table(Elf32_Shdr* shdr_tab, size_t n_shdr, Elf32_Off
     return 0;
 }
 
+// Find all .bss sections and zero them out.
+// ELF Specification, p1-14
+static void init_bss_sections(Elf32_Shdr* shdr_tab, size_t n_shdr, char* sh_str_tab) {
+    for (int i = 0; i < n_shdr; i++) {
+        Elf32_Shdr* shdr = shdr_tab + i;
+
+        char* name;
+        switch (shdr->sh_type) {
+            case SHT_NOBITS:
+                name = sh_str_tab + shdr->sh_name;
+                if (strcmp(name, ".text") == 0) {
+                    memset(shdr->sh_addr, 0, shdr->sh_size);
+                }
+        }
+    }
+}
+
 static Elf32_Shdr* locate_text_section(Elf32_Shdr* shdr_tab, size_t n_shdr, char* sh_str_tab) {
     for (int i = 0; i < n_shdr; i++) {
         Elf32_Shdr* shdr = shdr_tab + i;
@@ -27,7 +44,6 @@ static Elf32_Shdr* locate_text_section(Elf32_Shdr* shdr_tab, size_t n_shdr, char
         switch (shdr->sh_type) {
             case SHT_PROGBITS:
                 name = sh_str_tab + shdr->sh_name;
-                printk("sh name: %d %s\n", shdr->sh_name, name);
                 if (strcmp(name, ".text") == 0) {
                     return shdr;
                 }
@@ -82,13 +98,14 @@ int elf_exec(pi_file_t* file) {
     }
     Elf32_Sym* sym_tab = (Elf32_Sym*)(file->data + sym_tab_off);
 
+    init_bss_sections(shdr_tab, ehdr->e_shnum, sh_str_tab);
+
     Elf32_Shdr* text_sh = locate_text_section(shdr_tab, ehdr->e_shnum, sh_str_tab);
     if (!text_sh) {
         printk("Could not locate entry section\n");
         return -1;
     }
 
-    printk("Jumping to %x\n", text_sh->sh_addr);
     BRANCHTO(text_sh->sh_addr);
 
     return 0;
