@@ -3,6 +3,7 @@
 #include "disk/fat32.h"
 #include "disk/fs.h"
 #include "disk/sd.h"
+#include "elf.h"
 #include "shell.h"
 
 // have pi send this back when it reboots (otherwise my-install exits).
@@ -53,7 +54,7 @@ void do_ls(fat32_fs_t* fs, const char* path) {
 
 void exec_file(pi_file_t* f) {
     unsigned *contents = (unsigned *) f->data;
-    unsigned version = contents[0];
+    // unsigned version = contents[0];
     unsigned addr = contents[1];
 
     memcpy((char*) addr, f->data, f->n_data);
@@ -106,7 +107,8 @@ void do_run(fat32_fs_t* fs, const char* path) {
         return;
     }
     pi_file_t file = fat32_read_file(fs, entry);
-    exec_file(&file);
+    elf_exec(&file);
+    // exec_file(&file);
 
     kfree(file.data);
     kfree(dir.dirs);

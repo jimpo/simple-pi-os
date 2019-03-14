@@ -9,6 +9,7 @@ set(SRC shell.c
         disk/platform.c
         disk/sd.c
         disk/unicode-utf8.c
+        elf.c
         loader.c
         rpi-thread.c
         start.s
