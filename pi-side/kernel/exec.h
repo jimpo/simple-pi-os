@@ -7,6 +7,8 @@
 #include "vm.h"
 
 typedef struct {
+    unsigned heap_start;
+    unsigned heap_end;
     page_table_t page_tab;
 } process_t;
 

@@ -10,27 +10,25 @@ union align {
 };
 
 
-extern char __heap_start__;
-static char *heap = &__heap_start__;
+static char* heap_start = 0;
+static char* heap_end = 0;
+static char* heap = 0;
 
-void *kmalloc_heap_end(void) { return heap; }
-void *kmalloc_heap_start(void) { return &__heap_start__; }
-
-void kmalloc_set_start(unsigned _addr) {
-    char *addr = (void*)_addr;
-    assert(addr > heap);
-    heap = addr;
+void kmalloc_init(unsigned start, unsigned end) {
+    heap_start = (char*) start;
+    heap_end = (char*) end;
+    heap = heap_start;
 }
 
 void *kmalloc(unsigned sz) {
-        sz = roundup(sz, sizeof(union align));
+    sz = roundup(sz, sizeof(union align));
 
-        printk("heap=%x, sz=%x\n", heap, sz);
-        void *addr = heap;
-        heap += sz;
+    demand(heap + sz <= heap_end, heap overflow);
+    void *addr = heap;
+    heap += sz;
 
-        memset(addr, 0, sz);
-        return addr;
+    memset(addr, 0, sz);
+    return addr;
 }
 
 #define is_pow2(x)  (((x)&-(x)) == (x))
@@ -49,6 +47,6 @@ void *kmalloc_aligned(unsigned nbytes, unsigned alignment) {
 }
 
 void kfree(void *p) { }
-void kfree_all(void) { heap = &__heap_start__; }
+void kfree_all(void) { heap = heap_start; };
 void kfree_after(void *p) { heap = p; }
 

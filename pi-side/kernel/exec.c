@@ -18,11 +18,17 @@ int exec_file(pi_file_t* file, page_table_t* kernel_pt) {
         // according to ARM spec B1-6.
         set_procid_ttbr0(pt->asid, (fld_t*) pt->vaddr_map);
 
+        // Set the heap address.
+        kmalloc_init(proc.heap_start, proc.heap_end);
+
         // Jump to start address of new section.
         BRANCHTO(addr);
 
         // Context switch back
         set_procid_ttbr0(kernel_pt->asid, (fld_t*) pt->vaddr_map);
+
+        // Flush all TLB entries for the process.
+        mmu_inv_asid(proc.page_tab.asid);
     }
 
     mmu_unmap(pt);

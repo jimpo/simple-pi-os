@@ -106,8 +106,13 @@ void do_run(fat32_fs_t* fs, const char* path, page_table_t* kernel_pt) {
 void notmain() {
 	uart_init();
     demand(sd_init() == SD_OK, failed to initialize SD card);
-    // page_table_t kernel_pt;
-    page_table_t kernel_pt = vm_enable();
+
+    process_t kernel_proc;
+    kernel_proc.page_tab = vm_enable();
+    kernel_proc.heap_start = (unsigned) (TT_BASE + (N_VIRT_PAGES * sizeof(trans_table_t)));
+    kernel_proc.heap_end = kernel_proc.heap_start;
+
+    kmalloc_init(kernel_proc.heap_start, kernel_proc.heap_end);
 
     fat32_fs_t fs = fat32_init();
 
@@ -137,7 +142,7 @@ void notmain() {
             continue;
         }
         if (strncmp(buf, "run ", 4) == 0) {
-            do_run(&fs, buf + 4, &kernel_pt);
+            do_run(&fs, buf + 4, &kernel_proc.page_tab);
             printk("%s\n", cmd_done);
             continue;
         }
