@@ -10,8 +10,10 @@ set(SRC shell.c
         disk/sd.c
         disk/unicode-utf8.c
         elf.c
+        exec.c
         loader.c
         rpi-thread.c
+        our-vm-asm.o
         start.s
         thread-asm.s
         vm.c

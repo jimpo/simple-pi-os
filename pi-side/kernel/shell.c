@@ -3,7 +3,7 @@
 #include "disk/fat32.h"
 #include "disk/fs.h"
 #include "disk/sd.h"
-#include "elf.h"
+#include "exec.h"
 #include "shell.h"
 #include "vm.h"
 
@@ -53,17 +53,6 @@ void do_ls(fat32_fs_t* fs, const char* path) {
     kfree(dir.dirs);
 }
 
-void exec_file(pi_file_t* f) {
-    unsigned *contents = (unsigned *) f->data;
-    // unsigned version = contents[0];
-    unsigned addr = contents[1];
-
-    memcpy((char*) addr, f->data, f->n_data);
-    BRANCHTO(addr + 8);
-
-    return;
-}
-
 void do_read(fat32_fs_t* fs, const char* path) {
     if (path[0] != '/') {
         printk("Expected absolute path\n");
@@ -89,7 +78,7 @@ void do_read(fat32_fs_t* fs, const char* path) {
     kfree(dir.dirs);
 }
 
-void do_run(fat32_fs_t* fs, const char* path) {
+void do_run(fat32_fs_t* fs, const char* path, page_table_t* kernel_pt) {
     if (path[0] != '/') {
         printk("Expected absolute path\n");
         return;
@@ -108,8 +97,7 @@ void do_run(fat32_fs_t* fs, const char* path) {
         return;
     }
     pi_file_t file = fat32_read_file(fs, entry);
-    elf_exec(&file);
-    // exec_file(&file);
+    exec_file(&file, kernel_pt);
 
     kfree(file.data);
     kfree(dir.dirs);
@@ -118,7 +106,8 @@ void do_run(fat32_fs_t* fs, const char* path) {
 void notmain() {
 	uart_init();
     demand(sd_init() == SD_OK, failed to initialize SD card);
-    vm_enable();
+    // page_table_t kernel_pt;
+    page_table_t kernel_pt = vm_enable();
 
     fat32_fs_t fs = fat32_init();
 
@@ -148,7 +137,7 @@ void notmain() {
             continue;
         }
         if (strncmp(buf, "run ", 4) == 0) {
-            do_run(&fs, buf + 4);
+            do_run(&fs, buf + 4, &kernel_pt);
             printk("%s\n", cmd_done);
             continue;
         }

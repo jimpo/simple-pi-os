@@ -29,8 +29,8 @@ static void init_bss_sections(Elf32_Shdr* shdr_tab, size_t n_shdr, char* sh_str_
         switch (shdr->sh_type) {
             case SHT_NOBITS:
                 name = sh_str_tab + shdr->sh_name;
-                if (strcmp(name, ".text") == 0) {
-                    memset(shdr->sh_addr, 0, shdr->sh_size);
+                if (strcmp(name, ".bss") == 0) {
+                    memset((void*) shdr->sh_addr, 0, shdr->sh_size);
                 }
         }
     }
@@ -52,17 +52,17 @@ static Elf32_Shdr* locate_text_section(Elf32_Shdr* shdr_tab, size_t n_shdr, char
     return NULL;
 }
 
-int elf_exec(pi_file_t* file) {
+unsigned elf_load(pi_file_t* file, page_table_t* pt) {
     if (file->n_data < sizeof(Elf32_Ehdr)) {
         printk("Not an ELF32 file (too short)\n");
-        return -1;
+        return 0;
     }
 
     Elf32_Ehdr* ehdr = (Elf32_Ehdr*)file->data;
     if (!elf_magic_valid(ehdr)) {
         ehdr->e_ident[4] = 0;
         printk("Not an ELF32 file (incorrect magic)\n");
-        return -1;
+        return 0;
     }
 
     switch (ehdr->e_type) {
@@ -70,7 +70,7 @@ int elf_exec(pi_file_t* file) {
             break;
         default:
             printk("ELF type %s not supported\n", elf_type_str(ehdr->e_type));
-            return -1;
+            return 0;
     }
 
     Elf32_Phdr* phdr_tab = (Elf32_Phdr*)(file->data + ehdr->e_phoff);
@@ -85,7 +85,7 @@ int elf_exec(pi_file_t* file) {
                 break;
             default:
                 printk("ELF program header type %d not supported\n", phdr->p_type);
-                return -1;
+                return 0;
         }
     }
 
@@ -94,21 +94,19 @@ int elf_exec(pi_file_t* file) {
     size_t n_sym_tab = locate_symbol_table(shdr_tab, ehdr->e_shnum, &sym_tab_off);
     if (!n_sym_tab) {
         printk("Symbol table not found\n");
-        return -1;
+        return 0;
     }
-    Elf32_Sym* sym_tab = (Elf32_Sym*)(file->data + sym_tab_off);
+    // Elf32_Sym* sym_tab = (Elf32_Sym*)(file->data + sym_tab_off);
 
     init_bss_sections(shdr_tab, ehdr->e_shnum, sh_str_tab);
 
     Elf32_Shdr* text_sh = locate_text_section(shdr_tab, ehdr->e_shnum, sh_str_tab);
     if (!text_sh) {
         printk("Could not locate entry section\n");
-        return -1;
+        return 0;
     }
 
-    BRANCHTO(text_sh->sh_addr);
-
-    return 0;
+    return text_sh->sh_addr;
 }
 
 const char* elf_type_str(Elf32_Half type) {

@@ -13,6 +13,9 @@
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
+#define true 1
+#define false 0
+
 // Determine base 2 log of an integer greater than 0 rounded down to the nearest integer.
 unsigned int_log2(unsigned v);
 
@@ -94,6 +97,9 @@ void dummy(unsigned);
 /*******************************************************************************
  * simple memory allocation.
  */
+
+struct _heap;
+typedef struct _heap heap_t;
 
 void *kmalloc_heap_end(void);
 void *kmalloc_heap_start(void);

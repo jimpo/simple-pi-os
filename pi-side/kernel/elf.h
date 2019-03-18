@@ -4,6 +4,7 @@
 #include <libpi/rpi.h>
 
 #include "disk/fs.h"
+#include "vm.h"
 
 // ELF Specification, Figure 1-2
 typedef uint32_t Elf32_Addr;
@@ -114,11 +115,8 @@ typedef struct {
 
 int elf_magic_valid(Elf32_Ehdr* ehdr);
 
-/** Returns:
- * 0 on success
- * -1 on failure
- */
-int elf_exec(pi_file_t* file);
+// Returns start of text section on success, 0 on error.
+unsigned elf_load(pi_file_t* file, page_table_t* pt);
 
 const char* elf_type_str(Elf32_Half type);
 

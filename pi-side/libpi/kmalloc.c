@@ -25,6 +25,7 @@ void kmalloc_set_start(unsigned _addr) {
 void *kmalloc(unsigned sz) {
         sz = roundup(sz, sizeof(union align));
 
+        printk("heap=%x, sz=%x\n", heap, sz);
         void *addr = heap;
         heap += sz;
 

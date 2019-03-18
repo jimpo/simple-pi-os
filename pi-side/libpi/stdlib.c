@@ -99,7 +99,7 @@ char *strcpy(char * s1, const char * s2)
 }
 
 char* strchr(const char* s, int c) {
-	for (char* p = s; *p; p++) {
+	for (const char* p = s; *p; p++) {
 		if (*p == c) {
 			return p;
 		}
