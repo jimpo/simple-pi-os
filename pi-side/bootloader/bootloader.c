@@ -29,15 +29,15 @@ static void put_uint(unsigned u) {
     send_byte((u >> 24) & 0xff);
 }
 
-u8 receive_image(void) {
+uint8_t receive_image(void) {
     // 1. wait for SOH, size, cksum from unix side.
     if (get_uint() != SOH) {
         return NAK;
     }
 
-    u32 size = get_uint();
-    u32 code_checksum = get_uint();
-    u32 size_checksum = crc32(&size, sizeof(size));
+    uint32_t size = get_uint();
+    uint32_t code_checksum = get_uint();
+    uint32_t size_checksum = crc32(&size, sizeof(size));
 
     // 2. echo SOH, checksum(size), cksum back.
     put_uint(SOH);
@@ -50,7 +50,7 @@ u8 receive_image(void) {
     }
 
     // 4. read the bytes, one at a time, copy them to ARMBASE.
-    for (int i = 0; i < size; i += sizeof(u32)) {
+    for (int i = 0; i < size; i += sizeof(uint32_t)) {
         PUT32(ARMBASE + i, get_uint());
     }
 
@@ -76,7 +76,7 @@ void notmain(void) {
 
 
     /* XXX put your bootloader implementation here XXX */
-    u8 response;
+    uint8_t response;
     do {
         response = receive_image();
         put_uint(response);
