@@ -413,8 +413,6 @@ void mmu_map_section(page_table_t* pt, unsigned va, unsigned pa, unsigned flags)
     unsigned is_shared = flags & (MAP_FLAG_GLOBAL | MAP_FLAG_SHARED);
     if (!is_shared && (pa >> 20) < N_PHYS_PAGES) {
         demand(!paddr_to_asid_map[pa >> 20], physical page already assigned);
-        pt->paddr_map[pa >> 20].assigned = 1;
-        pt->paddr_map[pa >> 20].vaddr = va >> 20;
         paddr_to_asid_map[pa >> 20] = pt->asid;
     }
 
@@ -475,11 +473,13 @@ void mmu_map_to_mem(page_table_t* pt, unsigned addr, unsigned size, unsigned syn
 }
 
 void mmu_unmap(page_table_t* pt) {
-    for (size_t i = 0; i < N_PHYS_PAGES; i++) {
+    fld_t* fld_tab = (fld_t*) pt->vaddr_map;
+    for (size_t i = 0; i < N_VIRT_PAGES; i++) {
         // Free the page if it is used by this process and is not global.
-        if (pt->paddr_map->assigned && pt->vaddr_map[pt->paddr_map->vaddr]->nG) {
-            demand(paddr_to_asid_map[i] == pt->asid, global physical page map is corrupt);
-            paddr_to_asid_map[i] = 0;
+        fld_t* pte = fld_tab + i;
+        if (pte->tag && pte->nG) {
+            demand(paddr_to_asid_map[pte->sec_base_addr] == pt->asid, global physical page map is corrupt);
+            paddr_to_asid_map[pte->sec_base_addr] = 0;
         }
     }
 }
@@ -512,7 +512,6 @@ page_table_t vm_enable() {
     kernel_pt.asid = 1;
     kernel_pt.vaddr_map = TT_BASE + kernel_pt.asid;
     mmu_init(kernel_pt.vaddr_map);
-    memset(kernel_pt.paddr_map, 0, sizeof(kernel_pt.paddr_map));
     mmu_map_kernel_sections(&kernel_pt);
 
     // Now map in the translation tables.

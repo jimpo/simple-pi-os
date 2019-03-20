@@ -1,6 +1,7 @@
 #include "elf.h"
 #include "exec.h"
 #include "layout.h"
+#include "syscall.h"
 #include "vm.h"
 
 static unsigned exec_load_instr(process_t* proc, load_instr_t* instr) {
@@ -21,7 +22,12 @@ static unsigned exec_load_instr(process_t* proc, load_instr_t* instr) {
                 return 0;
             }
             proc->heap_end = proc->heap_start;
+
+            process_t* original_proc = syscall_get_current_proc();
+            syscall_set_current_proc(proc);
             BRANCHTO((unsigned) instr->dst_addr);
+            syscall_set_current_proc(original_proc);
+
             return 1;
         default:
             printk("Unknown load instruction op: %d\n", instr->op);

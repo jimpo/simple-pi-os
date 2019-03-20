@@ -4,17 +4,12 @@
 #include <libpi/rpi.h>
 
 #include "disk/fs.h"
+#include "process.h"
 #include "vm.h"
 
 #define LOAD_COPY 1
 #define LOAD_ZERO 2
 #define LOAD_JUMP 3
-
-typedef struct {
-    unsigned heap_start;
-    unsigned heap_end;
-    page_table_t page_tab;
-} process_t;
 
 typedef struct {
     // Operation (eg. LOAD_*)
