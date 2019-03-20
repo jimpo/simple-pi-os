@@ -141,6 +141,7 @@ pi_file_t fat32_read_file(fat32_fs_t *fs, dirent_t *d) {
         data += bytes_read;
     }
 
+    f.cksum = crc32(f.data, f.n_data);
     return f;
 }
 

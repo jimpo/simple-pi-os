@@ -155,6 +155,8 @@ void disable_cache(void) ;
 
 unsigned rpi_get_cpsr(void);
 
+uint32_t crc32(const void *buf, unsigned size);
+
 #include "gpio.h"
 #include "assert.h"
 

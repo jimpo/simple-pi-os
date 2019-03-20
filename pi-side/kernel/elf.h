@@ -4,6 +4,7 @@
 #include <libpi/rpi.h>
 
 #include "disk/fs.h"
+#include "exec.h"
 #include "vm.h"
 
 // ELF Specification, Figure 1-2
@@ -116,7 +117,8 @@ typedef struct {
 int elf_magic_valid(Elf32_Ehdr* ehdr);
 
 // Returns start of text section on success, 0 on error.
-unsigned elf_load(pi_file_t* file, page_table_t* pt);
+load_instr_t* elf_load(pi_file_t* file, process_t* proc, load_instr_t* instr_lst,
+        load_instr_t* instr_lst_end);
 
 const char* elf_type_str(Elf32_Half type);
 

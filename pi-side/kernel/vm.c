@@ -12,10 +12,11 @@
 */
 #include <libpi/rpi.h>
 
+#include "layout.h"
 #include "vm.h"
 
 ASID paddr_to_asid_map[N_PHYS_PAGES];
- trans_table_t* const TT_BASE = (trans_table_t *) 0x00100000;
+ trans_table_t* const TT_BASE = (trans_table_t *) TRANS_TABLE_ADDR;
 
 /************************************************************************
  ************************************************************************
@@ -405,13 +406,12 @@ static void tlb_asid_print(void) {
 void mmu_sync(fld_t* pte, unsigned vaddr_asid);
 
 // create a mapping for <va> to <pa> in the page table <pt>
-void mmu_map_section(page_table_t* pt, unsigned va, unsigned pa,
-        unsigned is_global, ASID sync_asid) {
-
+void mmu_map_section(page_table_t* pt, unsigned va, unsigned pa, unsigned flags) {
     assert(is_aligned(va, 20));
     assert(is_aligned(pa, 20));
 
-    if ((pa >> 20) < N_PHYS_PAGES) {
+    unsigned is_shared = flags & (MAP_FLAG_GLOBAL | MAP_FLAG_SHARED);
+    if (!is_shared && (pa >> 20) < N_PHYS_PAGES) {
         demand(!paddr_to_asid_map[pa >> 20], physical page already assigned);
         pt->paddr_map[pa >> 20].assigned = 1;
         pt->paddr_map[pa >> 20].vaddr = va >> 20;
@@ -420,6 +420,8 @@ void mmu_map_section(page_table_t* pt, unsigned va, unsigned pa,
 
     // set to the right index in pt.
     fld_t *pte = ((fld_t*) pt->vaddr_map) + (va >> 20);
+
+    unsigned old_pa = pte->sec_base_addr << 20;
 
     pte->tag = 0b10;
     pte->B = 0;
@@ -431,35 +433,45 @@ void mmu_map_section(page_table_t* pt, unsigned va, unsigned pa,
     pte->TEX = 0;
     pte->APX = 0;
     pte->S = 0;
-    pte->nG = !is_global;
+    pte->nG = !(flags & MAP_FLAG_GLOBAL);
     pte->super = 0;
     pte->_sbz1 = 0;
     pte->sec_base_addr = pa >> 20;
 
-    if (sync_asid) {
-        mmu_sync(pte, va | sync_asid);
+    if (flags & MAP_FLAG_SYNC) {
+        mmu_sync(pte, va | pt->asid);
     }
 
-    fld_print(pte);
-    printk("my.pte@ 0x%x = %b\n", pt->vaddr_map, *(unsigned*)pte);
+    // fld_print(pte);
+    // printk("mmu_map_section PTE=%x ASID=%d, VA=%x, PA=%x, old_PA=%x\n", pte, pt->asid, va, pa, old_pa);
 }
 
-void mmu_map_to_mem(page_table_t* pt, unsigned va, ASID sync_asid) {
-    unsigned pa = 0;
-
+static unsigned find_available_page() {
     // Skip index 1 because we can safely assume it is mapped to the kernel code.
     for (size_t i = 1; i < N_PHYS_PAGES; i++) {
         if (!paddr_to_asid_map[i]) {
-            pa = i << 20;
-            break;
+            return i << 20;
         }
     }
+    return 0;
+}
 
-    if (pa == 0) {
-        panic("Out of memory\n");
+void mmu_map_to_mem(page_table_t* pt, unsigned addr, unsigned size, unsigned sync) {
+    unsigned start_page = (addr - 1) >> 20;
+    unsigned end_page = (addr + size - 1) >> 20;
+
+    for (unsigned page = start_page + 1; page <= end_page; page++) {
+        unsigned pa = find_available_page();
+        if (pa == 0) {
+            panic("Out of memory\n");
+        }
+
+        unsigned flags = MAP_FLAG_NONE;
+        if (sync) {
+            flags |= MAP_FLAG_SYNC;
+        }
+        mmu_map_section(pt, page << 20, pa, flags);
     }
-
-    mmu_map_section(pt, va, pa, false, sync_asid);
 }
 
 void mmu_unmap(page_table_t* pt) {
@@ -482,10 +494,11 @@ void mmu_init(trans_table_t* base) {
 }
 
 void mmu_map_kernel_sections(page_table_t* pt) {
-    mmu_map_section(pt, 0x00000000, 0x00000000, true, 0);  // Kernel
-    mmu_map_section(pt, 0x20000000, 0x20000000, true, 0);  // UART addresses
-    mmu_map_section(pt, 0x20200000, 0x20200000, true, 0);  // GPIO addresses
-    mmu_map_section(pt, 0x20300000, 0x20300000, true, 0);  // EMMC addresses
+    unsigned flags = MAP_FLAG_GLOBAL;
+    mmu_map_section(pt, 0x00000000, 0x00000000, flags);  // Kernel
+    mmu_map_section(pt, 0x20000000, 0x20000000, flags);  // UART addresses
+    mmu_map_section(pt, 0x20200000, 0x20200000, flags);  // GPIO addresses
+    mmu_map_section(pt, 0x20300000, 0x20300000, flags);  // EMMC addresses
 }
 
 page_table_t vm_enable() {
@@ -506,7 +519,7 @@ page_table_t vm_enable() {
     size_t n_tt_pages = (sizeof(trans_table_t) * 256) >> 20;
     for (size_t i = 0; i < n_tt_pages; i++) {
         unsigned addr = ((unsigned) TT_BASE) + (i << 20);
-        mmu_map_section(&kernel_pt, addr, addr, false, 0);
+        mmu_map_section(&kernel_pt, addr, addr, MAP_FLAG_NONE);
     }
 
     // this should be wrapped up neater.  broken down so can replace

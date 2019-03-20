@@ -1,4 +1,5 @@
 #include "rpi.h"
+#include "syscall.h"
 
 
 #define roundup(x,n) (((x)+((n)-1))&(~((n)-1)))
@@ -14,16 +15,17 @@ static char* heap_start = 0;
 static char* heap_end = 0;
 static char* heap = 0;
 
-void kmalloc_init(unsigned start, unsigned end) {
-    heap_start = (char*) start;
-    heap_end = (char*) end;
-    heap = heap_start;
-}
-
 void *kmalloc(unsigned sz) {
     sz = roundup(sz, sizeof(union align));
 
-    demand(heap + sz <= heap_end, heap overflow);
+    if (!heap_start) {
+        heap = heap_start = heap_end = rpi_sbrk(0);
+    }
+    while (heap + sz > heap_end) {
+        unsigned incr = roundup(heap + sz - heap_end, 1 << 20);
+        assert(rpi_sbrk(incr) == heap_end + incr);
+        heap_end += incr;
+    }
     void *addr = heap;
     heap += sz;
 

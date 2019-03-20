@@ -1,10 +1,13 @@
 #include <libpi/rpi.h>
+#include <libpi/syscall.h>
 
 #include "disk/fat32.h"
 #include "disk/fs.h"
 #include "disk/sd.h"
 #include "exec.h"
+#include "layout.h"
 #include "shell.h"
+#include "syscall.h"
 #include "vm.h"
 
 // have pi send this back when it reboots (otherwise my-install exits).
@@ -78,7 +81,7 @@ void do_read(fat32_fs_t* fs, const char* path) {
     kfree(dir.dirs);
 }
 
-void do_run(fat32_fs_t* fs, const char* path, page_table_t* kernel_pt) {
+void do_run(fat32_fs_t* fs, const char* path, process_t* kernel_proc) {
     if (path[0] != '/') {
         printk("Expected absolute path\n");
         return;
@@ -96,10 +99,8 @@ void do_run(fat32_fs_t* fs, const char* path, page_table_t* kernel_pt) {
         kfree(dir.dirs);
         return;
     }
-    pi_file_t file = fat32_read_file(fs, entry);
-    exec_file(&file, kernel_pt);
+    exec_file(fs, entry, kernel_proc);
 
-    kfree(file.data);
     kfree(dir.dirs);
 }
 
@@ -109,10 +110,12 @@ void notmain() {
 
     process_t kernel_proc;
     kernel_proc.page_tab = vm_enable();
-    kernel_proc.heap_start = (unsigned) (TT_BASE + (N_VIRT_PAGES * sizeof(trans_table_t)));
+    kernel_proc.heap_start = KERNEL_HEAP_ADDR;
     kernel_proc.heap_end = kernel_proc.heap_start;
 
-    kmalloc_init(kernel_proc.heap_start, kernel_proc.heap_end);
+    syscall_set_kernel_proc(&kernel_proc);
+    syscall_set_current_proc(&kernel_proc);
+    rpi_set_sbrk(kernel_sbrk);
 
     fat32_fs_t fs = fat32_init();
 
@@ -142,7 +145,7 @@ void notmain() {
             continue;
         }
         if (strncmp(buf, "run ", 4) == 0) {
-            do_run(&fs, buf + 4, &kernel_proc.page_tab);
+            do_run(&fs, buf + 4, &kernel_proc);
             printk("%s\n", cmd_done);
             continue;
         }

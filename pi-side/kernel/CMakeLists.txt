@@ -15,6 +15,7 @@ set(SRC shell.c
         rpi-thread.c
         our-vm-asm.o
         start.s
+        syscall.c
         thread-asm.s
         vm.c
         vm-asm.S)

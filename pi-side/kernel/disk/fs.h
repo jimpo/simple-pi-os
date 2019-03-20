@@ -8,6 +8,7 @@
 // couple hour lab.
 typedef struct {
     char *data;
+    unsigned cksum;
     size_t n_alloc,    // total bytes allocated.
              n_data;     // how many bytes of data
 } pi_file_t;

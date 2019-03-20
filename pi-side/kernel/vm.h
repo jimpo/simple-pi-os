@@ -228,16 +228,20 @@ typedef struct {
 // in a multi-process setting.
 extern ASID paddr_to_asid_map[N_PHYS_PAGES];
 
-// If sync_asid is non-zero, this will call mmu_sync to ensure the page
+#define MAP_FLAG_NONE   0
+#define MAP_FLAG_GLOBAL (1 << 0)
+#define MAP_FLAG_SHARED (1 << 1)
+#define MAP_FLAG_SYNC   (1 << 2)
+
+// If sync is true, this will call mmu_sync to ensure the page
 // table update is seen by subsequent operations.
-void mmu_map_section(page_table_t *pt, unsigned va, unsigned pa,
-        unsigned is_global, ASID sync_asid);
+void mmu_map_section(page_table_t *pt, unsigned va, unsigned pa, unsigned flags);
 
 void mmu_init(trans_table_t* base);
 
 // Default mapping of addresses required by the kernel.
 void mmu_map_kernel_sections(page_table_t* page_tab);
-void mmu_map_to_mem(page_table_t* pt, unsigned va, ASID sync_asid);
+void mmu_map_to_mem(page_table_t* pt, unsigned addr, unsigned size, unsigned sync);
 
 // Marks the physical pages allocated to the process as free.
 void mmu_unmap(page_table_t* pt);

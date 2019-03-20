@@ -153,7 +153,7 @@ mmu_sync:
 mmu_inv_asid:
     CLR(R2)
     INV_ITLB_ASID(R0)
-    INV_DTLB_ASID(R1)
+    INV_DTLB_ASID(R0)
     FLUSH_BTB(R2)
     DSB(R2)
     PREFETCH_FLUSH(R2)

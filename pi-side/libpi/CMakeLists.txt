@@ -19,6 +19,7 @@ endif()
 
 set(SRC asm.s
         cache.c
+        crc32.c
         cstart.c
         gpio.c
         kmalloc.c
@@ -29,6 +30,7 @@ set(SRC asm.s
         rand.c
         reboot.c
         stdlib.c
+        syscall.c
         timer.c
         uart.c)
 
