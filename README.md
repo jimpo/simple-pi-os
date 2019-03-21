@@ -1,42 +1,6 @@
 # Simple Pi OS
 
-This is a partial operating system for a Rasberry Pi A+, written for CS 140e.
-
-## Running the OS
-
-### Dependencies
-- [CMake](https://cmake.org/)
-- [FUSE](https://github.com/libfuse/libfuse)
-- [GNU Arm Embedded Toolchain](https://developer.arm.com/open-source/gnu-toolchain/gnu-rm)
-
-On Ubuntu/Debian:
-```bash
-$ sudo add-apt-repository ppa:team-gcc-arm-embedded/ppa
-$ sudo apt-get update
-$ apt-get install gcc fuse libfuse-dev make cmake
-```
-
-### Installation
-
-- Copy the files in `firmware/` to the root directory of the Pi's SD card ([source](https://github.com/raspberrypi/firmware)).
-- Build the project
-```bash
-$ mkdir build
-$ cd build
-$ cmake ..
-$ make
-```
-- Build and copy `pi-side/bootloader/bootloader.bin` to the root directory of the Pi's SD card.
-- Run `make run-shell` to interact with the device.
-
-## Using the shell
-
-The shell supports the following builtin commands:
-
-- `ls PATH`. List a directory by absolute path beginning with a forward slash.
-- `cat PATH`. Print a file on disk by absolute path beginning with a forward slash.
-- `run PATH`. Run a statically-linked ELF executable file by absolute path.
-- `reboot`. Reboot the Pi.
+This is a partial bare metal operating system for a Rasberry Pi A+, written for CS 140e.
 
 ## Features
 
@@ -87,13 +51,53 @@ This is the main differentiating feature from the code in labs. The kernel is ab
 - The kernel then parses the ELF header, program headers, and section headers. It searches for any program header sections that need to be copied into the child processes address space and sets up a new mapping in the child's page table to a free section of physical memory. It does not, however, copy the segments yet since there is no mapping to the page in the kernel. Instead the load logic constructs a list of memory operations to be executed after the ASID and TTBR are switched. The kernel also searches for the bss segments, creates page table mappings, and adds memory operations to zero them out. The loader then identifies the starting address of the heap as the lowest address after all data and bss segments. Finally, the ELF logic identifies the text segment and returns the starting address.
 - Now the kernel switches the ASID and TTBR to the child process.
 - It then executes the memory operations (copying data and text segments from the load area to the appropriate addresses, zeroing bss segments, etc.). Finally it branches to the beginning of the process's text segment.
-- Notably, the stack pointer is not changed -- the child process's shares a stack with the kernel.
+- Notably, the stack pointer is not changed -- the child process's shares a stack with the kernel. This is simpler and since the kernel stack is mapping into the child process anyway, moving it doesn't feel that important.
 - When the executable returns control back to the kernel, it switches the TTBR back to the kernel's page table and the ASID back as well. It then issues TLB invalidate commands through the CP15 register to invalidate all TLB entries with the ASID of the exited child process. This allows the ASID to be reused by another process in the future.
 - The last step is to go through the exited child process's page table and mark all physical sections that it owned as free in the global mapping.
 
 ### Syscalls
 
 The kernel currently implements one syscall, `sbrk`, which works similarly to the Unix `sbrk`. A process can call it to request additional heap space from the kernel. The kernel keeps global pointers to the currently executing process, which stores the start and end addresses of its heap. `sbrk` can then switch back to the kernel's page table, ensure that the new virtual address space dedicated to the heap is mapped to free physical sections, and switch the page table back. This is a bit tricky because we need to clean the cache line of the modified page table entry and invalidate the TLB entries so that the changes are visible to the MMU.
+
+## Running the OS
+
+### Dependencies
+- [CMake](https://cmake.org/)
+- [FUSE](https://github.com/libfuse/libfuse)
+- [GNU Arm Embedded Toolchain](https://developer.arm.com/open-source/gnu-toolchain/gnu-rm)
+
+On Ubuntu/Debian:
+```bash
+$ sudo add-apt-repository ppa:team-gcc-arm-embedded/ppa
+$ sudo apt-get update
+$ apt-get install gcc fuse libfuse-dev make cmake
+```
+
+### Installation
+
+- Copy the files in `firmware/` to the root directory of the Pi's SD card ([source](https://github.com/raspberrypi/firmware)).
+- Build the project
+```bash
+$ mkdir build
+$ cd build
+$ cmake ..
+$ make
+```
+- Build and copy `pi-side/bootloader/bootloader.bin` to the root directory of the Pi's SD card.
+- Run `make run-shell` to interact with the device.
+
+## Using the shell
+
+The shell supports the following builtin commands:
+
+- `ls PATH`. List a directory by absolute path beginning with a forward slash.
+- `cat PATH`. Print a file on disk by absolute path beginning with a forward slash.
+- `run PATH`. Run a statically-linked ELF executable file by absolute path.
+- `reboot`. Reboot the Pi.
+
+## Writing programs
+
+Userspace programs to be run on the Pi are located in `pi-side/usr/`. The `CMakeFiles.txt` examples are very simple and produce statically linked executables. One thing to be aware of is that the first 1 MiB of the address space in these programs is reserved for the kernel, so the text segment has to start at 0x10000000 at least.
 
 ## References
 
