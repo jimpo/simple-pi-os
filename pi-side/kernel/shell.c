@@ -5,6 +5,7 @@
 #include "disk/fs.h"
 #include "disk/sd.h"
 #include "exec.h"
+#include "interrupts.h"
 #include "layout.h"
 #include "shell.h"
 #include "syscall.h"
@@ -115,7 +116,7 @@ void notmain() {
 
     syscall_set_kernel_proc(&kernel_proc);
     syscall_set_current_proc(&kernel_proc);
-    rpi_set_sbrk(kernel_sbrk);
+    int_init();
 
     fat32_fs_t fs = fat32_init();
 

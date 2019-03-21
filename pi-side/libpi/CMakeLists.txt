@@ -30,7 +30,7 @@ set(SRC asm.s
         rand.c
         reboot.c
         stdlib.c
-        syscall.c
+        syscall.s
         timer.c
         uart.c)
 

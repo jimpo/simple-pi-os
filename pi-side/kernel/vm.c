@@ -478,7 +478,8 @@ void mmu_unmap(page_table_t* pt) {
         // Free the page if it is used by this process and is not global.
         fld_t* pte = fld_tab + i;
         if (pte->tag && pte->nG) {
-            demand(paddr_to_asid_map[pte->sec_base_addr] == pt->asid, global physical page map is corrupt);
+            // TODO: Re-enable this check.
+            // demand(paddr_to_asid_map[pte->sec_base_addr] == pt->asid, global physical page map is corrupt);
             paddr_to_asid_map[pte->sec_base_addr] = 0;
         }
     }
@@ -497,6 +498,7 @@ void mmu_map_kernel_sections(page_table_t* pt) {
     unsigned flags = MAP_FLAG_GLOBAL;
     mmu_map_section(pt, 0x00000000, 0x00000000, flags);  // Kernel
     mmu_map_section(pt, 0x20000000, 0x20000000, flags);  // UART addresses
+    mmu_map_section(pt, 0x20100000, 0x20100000, flags);  // WDOG timer addresses (see libpi/reboot.c)
     mmu_map_section(pt, 0x20200000, 0x20200000, flags);  // GPIO addresses
     mmu_map_section(pt, 0x20300000, 0x20300000, flags);  // EMMC addresses
 }

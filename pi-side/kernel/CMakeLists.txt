@@ -11,6 +11,8 @@ set(SRC shell.c
         disk/unicode-utf8.c
         elf.c
         exec.c
+        interrupts.c
+        interrupts-asm.S
         loader.c
         rpi-thread.c
         our-vm-asm.o
