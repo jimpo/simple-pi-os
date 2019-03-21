@@ -57,7 +57,7 @@ This is the main differentiating feature from the code in labs. The kernel is ab
 
 ### Syscalls
 
-The kernel currently implements one syscall, `sbrk`, which works similarly to the Unix `sbrk`. A process can call it to request additional heap space from the kernel. The kernel keeps global pointers to the currently executing process, which stores the start and end addresses of its heap. `sbrk` can then switch back to the kernel's page table, ensure that the new virtual address space dedicated to the heap is mapped to free physical sections, and switch the page table back. This is a bit tricky because we need to clean the cache line of the modified page table entry and invalidate the TLB entries so that the changes are visible to the MMU.
+The kernel currently implements one syscall, `sbrk`, which works similarly to the Unix `sbrk`. A process can call it to request additional heap space from the kernel. The kernel keeps global pointers to the currently executing process, which stores the start and end addresses of its heap. `sbrk` can then switch back to the kernel's page table, ensure that the new virtual address space dedicated to the heap is mapped to free physical sections, and switch the page table back. This is a bit tricky because we need to clean the cache line of the modified page table entry and invalidate the TLB entries so that the changes are visible to the MMU. One thing that took a lot of time to deal with is that the CPSR mode that the Pi starts up in seems to be non-deterministic, and I haven't figured out why yet.
 
 ## Running the OS
 
