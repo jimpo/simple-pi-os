@@ -1,10 +1,12 @@
 # Simple Pi OS
 
-This is a partial bare metal operating system for a Rasberry Pi A+, written for CS 140e.
+This is a partial operating system for a bare metal Rasberry Pi A+, written for [Stanford CS 140e](http://web.stanford.edu/class/cs140e/).
 
 ## Features
 
-The operating system kernel is loaded into the Pi's memory from the bootloader over the UART. The kernel implements virtual memory, listing directories and reading files on the SD card, and execution of programs read from disk.
+### Bootloader
+
+The operating system kernel is loaded into the Pi's memory from the bootloader over the UART interface on each reboot. The kernel implements virtual memory, listing directories and reading files on the SD card, and execution of programs read from disk.
 
 ### Memory layout
 
@@ -12,14 +14,14 @@ The first 1 MiB of physical memory starting at 0x00000000 is reserved for the ke
 
 The kernel's virtual address space layout is:
 
-0x00000000-???: The table of exeception vectors and implementation of basic interrupt handlers.
-???-0x00008000: The kernel stack, which is shared with child processes.
-0x00008000-???: The kernel text, data, and bss segments.
-0x000D0000-0x000E0000: The stack during general interrupt handling.
-0x000E0000-0x000F0000: The stack during software interrupt handling.
-0x00100000-0x00050000: Space allocated for 256 page tables, 16 KiB each, one per available ASID.
-0x00500000-???: Kernel heap space.
-0x10000000-???: Kernel program loading buffer.
+- 0x00000000-???: The table of exeception vectors and implementation of basic interrupt handlers.
+- ???-0x00008000: The kernel stack, which is shared with child processes.
+- 0x00008000-???: The kernel text, data, and bss segments.
+- 0x000D0000-0x000E0000: The stack during general interrupt handling.
+- 0x000E0000-0x000F0000: The stack during software interrupt handling.
+- 0x00100000-0x00050000: Space allocated for 256 page tables, 16 KiB each, one per available ASID.
+- 0x00500000-???: Kernel heap space.
+- 0x10000000-???: Kernel program loading buffer.
 
 Each process's virtual address space is determined dynamically by the ELF headers, with the exception that the first 1 MiB is reserved for the kernel code as well as some sections in the range of peripheral addresses.
 
@@ -27,7 +29,7 @@ Each process's virtual address space is determined dynamically by the ELF header
 
 The virtual memory system uses 1 MiB sections and supports multiple processes with different ASIDs. No access control is implemented and all processes use the same domain. The kernel keeps track of which physical pages are in use in a global map to avoid collisions. This is necessary since pages are not mapped to disk locations, just physical memory, and there is no swapping.
 
-### Processes
+### User Processes
 
 Processes are identified by an 8-bit process ID, which are the same as their ASIDs. Each process has its own virtual address space. The kernel's structure for a process tracks its page translations. A page table structure references the actual array of first level descriptors read by the MMU.
 
@@ -39,7 +41,7 @@ typedef struct {
 } process_t;
 ```
 
-The kernel runs with ASID 1 because ASID 0 is reserved as unused. This is a trick so that the instruction TLB is not filled with incorrectly prefetched sections while a TTBR change is occurring.
+The kernel runs with ASID 1 because ASID 0 is reserved as unused. This is a trick so that the instruction TLB is not filled with incorrectly prefetched sections while a TTBR change is occurring. User processes currently have no strong protection and run in the same mode as the kernel.
 
 ### Program execution
 
